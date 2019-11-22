@@ -33,22 +33,28 @@ async function getLatestPrices(tickers, apikey) {
 
   async function getLatestPrice(ticker) {
     console.log(`getLatestPrice(${ticker})`);
+    let responseStr;
+    let response;
+    // Headers not required?
+    // User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Mobile Safari/537.36
+    // Referer: https://uk.finance.yahoo.com/quote/HSBA.L?p=HSBA.L
+    // Origin: https://uk.finance.yahoo.com
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?region=GB&lang=en-GB&includePrePost=false&interval=5m&range=1d&corsDomain=uk.finance.yahoo.com&.tsrc=finance`;
     try {
-      // Headers not required?
-      // User-Agent: Mozilla/5.0 (Linux; Android 5.0; SM-G900P Build/LRX21T) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.108 Mobile Safari/537.36
-      // Referer: https://uk.finance.yahoo.com/quote/HSBA.L?p=HSBA.L
-      // Origin: https://uk.finance.yahoo.com
-      const url = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?region=GB&lang=en-GB&includePrePost=false&interval=5m&range=1d&corsDomain=uk.finance.yahoo.com&.tsrc=finance`;
-      const response = await get(url);
-      const ob = JSON.parse(response);
-      if (ob && ob.chart && ob.chart.error) {
+      responseStr = await get(url);
+      response = JSON.parse(responseStr);
+      if (response && response.chart && response.chart.error) {
         return {
           ticker,
-          err: ob.chart.error,
+          err: response.chart.error,
         };
       }
-      const high = props.get(ob, "chart.result[0].indicators.quote[0].high");
-      const value = props.arrGetLastValidValue(high);
+      const regularMarketPrice = props.get(response, "chart.result[0].meta.regularMarketPrice");
+      const close = props.get(response, "chart.result[0].indicators.quote[0].close");
+      const high = props.get(response, "chart.result[0].indicators.quote[0].high");
+      const lastClose = props.arrGetLastValidValue(close);
+      const lastHigh = props.arrGetLastValidValue(high);
+      const value = lastClose || lastHigh || regularMarketPrice;
       return {
         ticker,
         value,

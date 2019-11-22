@@ -43,12 +43,14 @@ function get(ob, prop) {
 }
 
 function arrGetLastValidValue(arr) {
-  let prev;
-  for (const val of arr) {
-    if (typeof val === "undefined" || val === null) {
-      return prev;
+  if (!Array.isArray(arr)) {
+    throw new Error("arrGetLastValidValue must be passed an array");
+  }
+  for (let i = arr.length - 1; i >= 0; i--) {
+    const val = arr[i];
+    if (typeof val !== "undefined" && val !== null) {
+      return val;
     }
-    prev = val;
   }
   return null;
 }
